@@ -1,0 +1,86 @@
+\documentclass{article}
+\usepackage{graphicx} % For including diagrams
+
+\title{MPI File Transfer Practical Work}
+\author{Ha Tan Minh}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+The purpose of this practical is to implement a file transfer system using Message Passing Interface (MPI). The system involves multiple processes communicating and transferring files efficiently using MPI primitives.
+
+\section{Protocol Design}
+The file transfer protocol using MPI involves:
+\begin{itemize}
+    \item Dividing the file into chunks.
+    \item Using one process (rank 0) as the master to distribute chunks to other processes.
+    \item Collecting the chunks at the receiver side and reconstructing the file.
+\end{itemize}
+
+
+\section{Implementation}
+The implementation involves an MPI-based Python script using the \texttt{mpi4py} library.
+
+\subsection{MPI Code}
+The MPI script handles both sending and receiving:
+\begin{verbatim}
+from mpi4py import MPI
+import os
+
+comm = MPI.COMM_WORLD
+rank = comm.Get_rank()
+size = comm.Get_size()
+
+filename = "example.txt"
+chunk_size = 1024  # Size of each chunk in bytes
+
+if rank == 0:
+    # Master process: read file and distribute chunks
+    with open(filename, 'rb') as file:
+        file_content = file.read()
+    file_size = len(file_content)
+    print(f"File size: {file_size} bytes")
+
+    for i in range(1, size):
+        start_index = (i - 1) * chunk_size
+        end_index = min(start_index + chunk_size, file_size)
+        comm.send(file_content[start_index:end_index], dest=i, tag=11)
+    print("File chunks sent to workers.")
+
+else:
+    # Worker processes: receive chunks and save to file
+    chunk = comm.recv(source=0, tag=11)
+    with open(f"received_{rank}.txt", 'wb') as file:
+        file.write(chunk)
+    print(f"Process {rank} received and saved chunk.")
+
+if rank == 0:
+    # Master process: reassemble chunks at the receiver
+    with open("received_file.txt", 'wb') as output_file:
+        for i in range(1, size):
+            with open(f"received_{i}.txt", 'rb') as input_file:
+                output_file.write(input_file.read())
+    print("File reassembled successfully.")
+\end{verbatim}
+
+\section{Results}
+The MPI-based file transfer system was successfully tested. The following results were obtained:
+\begin{itemize}
+    \item File transferred: `example.txt`
+    \item File size: 58 B
+    \item Number of processes: 4
+    \item Transfer time: ~1 second
+\end{itemize}
+
+\section{Roles}
+Contributed to this project:
+\begin{itemize}
+    \item Ha Tan Minh: Developed the master-worker MPI code.
+    \item Ha Tan Minh: Tested the file transfer with multiple processes.
+    \item Ha Tan Minh: Prepared the report in LaTeX.
+\end{itemize}
+
+\end{document}

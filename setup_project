@@ -1,0 +1,16 @@
+1. Install
+python setup.py
+pip install mpi4py
+
+2.  Run the Server and Clients
+mpiexec -n 4 python src/server.py
+
+#This command:
+#    Starts one server process (rank 0).
+#    Starts three client processes (rank 1, 2, 3).
+
+3. Interact with the System
+#In the client terminals, you can enter commands like:
+SET key value
+GET key
+DELETE key
